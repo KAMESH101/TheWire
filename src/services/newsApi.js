@@ -1,5 +1,9 @@
 // ─── services/newsApi.js ───────────────────────────────────────────────────
-const API_KEY = process.env.REACT_APP_GNEWS_API_KEY || "YOUR_GNEWS_API_KEY_HERE";
+const API_KEY = process.env.REACT_APP_GNEWS_API_KEY || "";
+// On Vercel → use the serverless proxy (/api/news) to avoid CORS + hide key
+// On localhost → call GNews directly with the .env key
+const IS_PROD = process.env.NODE_ENV === "production";
+const PROXY_URL = "/api/news";
 const BASE_URL = "https://gnews.io/api/v4";
 
 // ── Mock fallback ──────────────────────────────────────────────────────────
@@ -72,16 +76,27 @@ const fetchJSON = async (url) => {
   return res.json();
 };
 
-// ── Public API — page param added for pagination ───────────────────────────
+// ── Public API ────────────────────────────────────────────────────────────
 export const fetchTopHeadlines = async (topic = "general", max = 10, page = 1) => {
-  const topicParam = topic === "general" ? "" : `&topic=${topic}`;
-  const url = `${BASE_URL}/top-headlines?lang=en&max=${max}&page=${page}${topicParam}&token=${API_KEY}`;
+  let url;
+  if (IS_PROD) {
+    const topicParam = topic === "general" ? "" : `&topic=${topic}`;
+    url = `${PROXY_URL}?max=${max}&page=${page}${topicParam}`;
+  } else {
+    const topicParam = topic === "general" ? "" : `&topic=${topic}`;
+    url = `${BASE_URL}/top-headlines?lang=en&max=${max}&page=${page}${topicParam}&token=${API_KEY}`;
+  }
   const data = await fetchJSON(url);
   return data.articles.map(normaliseArticle);
 };
 
 export const searchArticles = async (query, max = 10, page = 1) => {
-  const url = `${BASE_URL}/search?q=${encodeURIComponent(query)}&lang=en&max=${max}&page=${page}&token=${API_KEY}`;
+  let url;
+  if (IS_PROD) {
+    url = `${PROXY_URL}?q=${encodeURIComponent(query)}&max=${max}&page=${page}`;
+  } else {
+    url = `${BASE_URL}/search?q=${encodeURIComponent(query)}&lang=en&max=${max}&page=${page}&token=${API_KEY}`;
+  }
   const data = await fetchJSON(url);
   return data.articles.map(normaliseArticle);
 };
