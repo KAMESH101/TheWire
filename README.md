@@ -100,9 +100,9 @@ cd TheWire
 Sign up at **https://gnews.io** — free tier gives **100 requests/day**.
 
 ### 3. Set your API key
-```bash
-cp .env.example .env
-# Edit .env — replace the placeholder with your key
+Create a `.env` file in the project root:
+```env
+REACT_APP_GNEWS_API_KEY=your_key_here
 ```
 
 ### 4. Install & run
